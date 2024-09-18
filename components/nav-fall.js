@@ -9,16 +9,9 @@ import {
   IoPersonCircleOutline,
   IoLogoGithub,
   IoGlobeOutline,
-  IoAddCircleOutline,
 } from "react-icons/io5";
 
-const Navbar = ({
-  onModelChange,
-  mode,
-  onModeChange,
-  onSidebarToggle,
-  onNewChat,
-}) => {
+const Navbar = ({ onModelChange, onModeChange, mode: initialMode }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -26,8 +19,8 @@ const Navbar = ({
   const [lastSearchModel, setLastSearchModel] = useState(
     "Select Search Engine",
   );
+  const [mode, setMode] = useState(initialMode);
   const menuRef = useRef(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
@@ -58,11 +51,19 @@ const Navbar = ({
     }
   }, []);
 
+  useEffect(() => {
+    const storedMode = localStorage.getItem("mode");
+    if (storedMode) {
+      setMode(storedMode);
+      onModeChange(storedMode);
+    }
+  }, [onModeChange]);
+
   const data = [
     {
       label: "Search Engines",
       options: [
-        // { label: "Perplexity", value: "perplexityApiKey", name: "perplexity" },
+        { label: "Perplexity", value: "perplexityApiKey", name: "perplexity" },
         { label: "Exa.ai", value: "exaApiKey", name: "exa" },
       ],
     },
@@ -141,7 +142,9 @@ const Navbar = ({
 
   const toggleMode = () => {
     const newMode = mode === "chatbot" ? "search" : "chatbot";
+    setMode(newMode);
     onModeChange(newMode);
+    localStorage.setItem("mode", newMode);
     if (newMode === "chatbot") {
       onModelChange(lastChatbotModel);
     } else {
@@ -169,11 +172,6 @@ const Navbar = ({
     localStorage.setItem("theme", newMode ? "dark" : "light");
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-    onSidebarToggle();
-  };
-
   return (
     <nav
       className={`bg-background-light fixed w-full top-0 left-0 right-0 dark:bg-background-dark z-50 ${
@@ -185,25 +183,22 @@ const Navbar = ({
           <div className='flex items-center space-x-2 sm:space-x-3 md:space-x-4'>
             <button
               className='text-primary dark:text-quaternary dark:hover:text-primary transition-colors p-1 sm:p-2 rounded-full'
-              onClick={toggleSidebar}
-              title='Toggle Sidebar'
+              onClick={() => {
+                /* Handle hamburger menu click */
+              }}
+              title='Menu'
             >
               <IoMenu size={24} className='sm:w-6 sm:h-6 md:w-7 md:h-7' />
             </button>
-
-            {/* New Chat Icon */}
-            <button
-              className='text-primary dark:text-quaternary dark:hover:text-primary transition-colors p-1 sm:p-2 rounded-full'
-              onClick={onNewChat}
+            <Image
+              src='/icons/file.svg'
+              alt='New Chat'
+              width={20}
+              height={20}
+              className='text-secondary dark:text-quaternary sm:w-5 sm:h-5 md:w-6 md:h-6'
               title='New Chat'
-            >
-              <IoAddCircleOutline
-                size={24}
-                className='sm:w-6 sm:h-6 md:w-7 md:h-7'
-              />
-            </button>
-
-            <div className='hidden sm:block w-56 lg:w-64'>
+            />
+            <div className='w-56 lg:w-64'>
               <DropdownComponent
                 data={data}
                 placeholder={
@@ -216,11 +211,9 @@ const Navbar = ({
             </div>
           </div>
           <div className='flex items-center space-x-1 sm:space-x-2 md:space-x-3'>
-            <div className='hidden sm:flex items-center space-x-1 sm:space-x-2 md:space-x-3'>
-              <div className='flex items-center space-x-2 sm:space-x-3 md:space-x-4'>
-                <ToggleButton mode={mode} onToggle={toggleMode} />
-                <NavButtons />
-              </div>
+            <div className='flex items-center space-x-2 sm:space-x-3 md:space-x-4'>
+              <ToggleButton mode={mode} onToggle={toggleMode} />
+              <NavButtons />
             </div>
             <div className='relative' ref={menuRef}>
               <button
@@ -231,30 +224,16 @@ const Navbar = ({
                 <IoPersonCircleOutline size={32} />
               </button>
               {isMenuOpen && (
-                <div className='absolute right-0 mt-2 w-64 sm:w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10'>
-                  <div className='sm:hidden flex justify-center py-2'>
-                    <NavButtons />
-                  </div>
-                  <div className='sm:hidden px-4 py-2'>
-                    <DropdownComponent
-                      data={data}
-                      placeholder={
-                        mode === "chatbot"
-                          ? "Select Model"
-                          : "Select Search Engine"
-                      }
-                      onSelect={handleModelChange}
-                      isDarkMode={isDarkMode}
-                      mode={mode}
-                    />
-                  </div>
+                <div className='absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10'>
                   <button
                     className='block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
                     onClick={() => setIsDialogOpen(true)}
                   >
                     Settings
                   </button>
-                  {/* Add more menu items as needed */}
+                  <div className='sm:hidden flex justify-center py-2'>
+                    <NavButtons />
+                  </div>
                 </div>
               )}
             </div>
@@ -273,6 +252,7 @@ const NavButtons = () => (
       href='https://github.com/VedaVerse-opensource/chatsphere'
       target='_blank'
       rel='noopener noreferrer'
+      className='inline-block'
     >
       <NavButton
         icon={<IoLogoGithub size={20} />}

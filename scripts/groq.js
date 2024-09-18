@@ -10,26 +10,24 @@ if (typeof window !== "undefined") {
   });
 }
 
-async function groqResponse(content, context) {
-  if (!groq) return "Groq SDK not initialized";
+async function* groqResponse(content, contextMessages) {
+  if (!groq) yield "Groq SDK not initialized";
 
   try {
-    const contextMessages = Object.values(context).map(response => ({
-      role: response.type === "user" ? "user" : "assistant",
-      content: response.text,
-    }));
-
     const messages = [...contextMessages, { role: "user", content: content }];
 
-    const chatCompletion = await groq.chat.completions.create({
+    const stream = await groq.chat.completions.create({
       messages: messages,
       model: "llama-3.1-70b-versatile",
+      stream: true,
     });
 
-    return chatCompletion.choices[0]?.message?.content || "";
+    for await (const chunk of stream) {
+      yield chunk.choices[0]?.delta?.content || "";
+    }
   } catch (error) {
     console.error("Error in groqResponse:", error);
-    return "An error occurred";
+    yield "An error occurred";
   }
 }
 
